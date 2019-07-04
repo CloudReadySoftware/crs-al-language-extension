@@ -5,7 +5,7 @@ import { WorkspaceFiles } from './WorkspaceFiles';
 import { SnippetFunctions } from './SnippetFunctions';
 import * as fs from 'fs';
 import { NAVObject } from './NAVObject';
-import * as path from 'path'
+import * as path from 'path';
 import { MSDocs } from './MSDocs';
 import { Google } from './Google';
 import * as CRSStatusBar from './UI/CRSStatusBar';
@@ -168,6 +168,30 @@ export function SearchGoogle() {
         Google.OpenSearchUrl(SearchString));
 
     console.log('Done: SearchGoogle');
+}
+
+export function InsertNextObjectID() {
+    console.log('Running: InsertNextObjectID');
+    vscode.window.activeTextEditor.document.save().then(async saved => {
+        try {
+
+            let currentDocument = vscode.window.activeTextEditor.document
+            let newId = await WorkspaceFiles.GetNextObjectId(currentDocument);
+            let textEditor = vscode.window.activeTextEditor;
+            textEditor.edit(edit => {
+                for (const selection of textEditor.selections) {
+                    if (selection.isEmpty) {
+                        edit.insert(selection.start, newId.toString());
+                    } else {
+                        edit.replace(selection, newId.toString());
+                    }
+                }
+            })
+        } catch (error) {
+            vscode.window.showErrorMessage(error);
+        }
+    });
+    console.log('Done: InsertNextObjectID');
 }
 
 export function SetupSnippets() {

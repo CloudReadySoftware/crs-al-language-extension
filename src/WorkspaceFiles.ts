@@ -285,6 +285,55 @@ export class WorkspaceFiles {
 
         return navObject.objectType
     }
+
+
+    static async LoadAllNavObjects(): Promise<NAVObject[]> {
+        let navObjects = new Array();
+
+        await this.getAlFilesFromCurrentWorkspace().then(Files => {
+            try {
+                Files.forEach(file => {
+                    console.log(file.fsPath);
+                    try {
+                        let navObject = new NAVObject(fs.readFileSync(file.fsPath).toString(), Settings.GetConfigSettings(file), path.basename(file.fsPath))
+                        navObjects.push(navObject);
+                    } catch (error) {
+
+                    }
+                })
+            } catch (error) {
+                vscode.window.showErrorMessage(error.message);
+            }
+        });
+        return navObjects;
+
+    }
+    static async GetNextObjectId(currentDocument): Promise<number> {
+        let settingsCollection = Settings.GetAppSettings(null);
+        let objectType = NAVObject.getObjectType(fs.readFileSync(currentDocument.uri.fsPath).toString());
+
+        let navObjects = await WorkspaceFiles.LoadAllNavObjects();
+        let objectsOfSameType = navObjects.filter(x => x.objectType == objectType &&
+            x.objectId >= settingsCollection[Settings.AppIdRangeFrom] &&
+            x.objectId <= settingsCollection[Settings.AppIdRangeTo])
+            .sort((a, b) => Number.parseInt(a.objectId) > Number.parseInt(b.objectId) ? 1 : Number.parseInt(b.objectId) > Number.parseInt(a.objectId) ? -1 : 0);
+        if (objectsOfSameType.length==0) {
+            return Number.parseInt(settingsCollection[Settings.AppIdRangeFrom]);    
+        }
+        let lastUsedId: number = Number.parseInt(settingsCollection[Settings.AppIdRangeFrom]) - 1;
+        for (var obj of objectsOfSameType){
+            if (Number.parseInt(obj.objectId) > lastUsedId + 1) {
+                return lastUsedId + 1;
+            }
+            lastUsedId = Number.parseInt(obj.objectId);
+        }
+        if (lastUsedId < Number.parseInt(settingsCollection[Settings.AppIdRangeTo])) {
+            return lastUsedId + 1;
+        }
+        throw "There are no available Object IDs for this Object Type.";
+        
+    }
+
 }
 
 

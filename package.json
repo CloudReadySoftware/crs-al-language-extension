@@ -105,6 +105,10 @@
             {
                 "command": "crs.SearchGoogle",
                 "title": "CRS: Search Google"
+            },
+            {
+                "command": "crs.InsertNextObjectID",
+                "title": "CRS: Insert next available ObjectID"
             }
         ],
         "configuration": {
